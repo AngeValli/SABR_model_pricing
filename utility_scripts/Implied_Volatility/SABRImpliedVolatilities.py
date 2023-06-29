@@ -1,5 +1,11 @@
 """SABR model for implied volatilities approximations"""
 
+import os
+import sys
+
+parent = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+sys.path.append(parent)
+
 import reference_data as reference_data
 
 from typing import List
