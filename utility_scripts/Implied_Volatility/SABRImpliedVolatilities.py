@@ -2,16 +2,14 @@
 
 import os
 import sys
-
-parent = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-sys.path.append(parent)
-
-import reference_data as reference_data
-
 from typing import List
 
-import numpy as np
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
 import matplotlib.pyplot as plt
+import numpy as np
+
+import reference_data as reference_data
 
 class SABR_ATMVol:
     """
@@ -67,6 +65,9 @@ class SABR_ATMVol:
         
 
 class SABR_ImpliedVol(SABR_ATMVol):
+    """
+    Class for computing and plotting implied vol
+    """
     def __init__(
         self, K: float, f: float = reference_data.forward, alpha: float = reference_data.alpha, beta: float = reference_data.beta, rho: float = reference_data.rho, 
         nu: float = reference_data.vol_of_vol, t_ex: float = reference_data.maturity
@@ -74,17 +75,13 @@ class SABR_ImpliedVol(SABR_ATMVol):
         super().__init__(f=f, alpha=alpha, beta=beta, rho=rho, nu=nu, t_ex=t_ex)
         self.K = K
 
-    def lambda_ratio(self, forward_price: float = None) -> float:
+    def lambda_ratio(self) -> float:
         """
         Method to compute lambda ratio in SABR model
         """
-        if forward_price is None :
-            f = self.f
-        else:
-            f = forward_price
-        return self.nu/self.alpha * np.power(f, 1-self.beta)
+        return self.nu/self.alpha * np.power(self.f, 1-self.beta)
                                                            
-    def Implied_Vol(self, forward_price: float = None) -> float:
+    def Implied_Vol(self, strike: float = None) -> float:
         """
         Method to compute implied volatility value
         Params:
@@ -92,16 +89,16 @@ class SABR_ImpliedVol(SABR_ATMVol):
         Output:
             Implied volatility value
         """
-        if forward_price is None :
-            f = self.f
+        if strike is None :
+            K = self.K
         else:
-            f = forward_price
+            K = strike
         lambda_ = self.lambda_ratio()
-        return self.alpha/np.power(f, 1-self.beta) * (1 -
-        1/2*(1-self.beta-self.rho*lambda_)*np.log(self.K/f) + 1/12 * (np.power(1-self.beta,2) +
-          (2-3*np.power(self.rho,2))*np.power(lambda_,2)) * np.power(np.log(self.K/f), 2))
+        return self.alpha/np.power(self.f, 1-self.beta) * (1 -
+        1/2*(1-self.beta-self.rho*lambda_)*np.log(K/self.f) + 1/12 * (np.power(1-self.beta,2) +
+          (2-3*np.power(self.rho,2))*np.power(lambda_,2)) * np.power(np.log(K/self.f), 2))
     
-    def display_ImpliedVol(self, forward_prices: List[float], figure: bool = False):
+    def display_ImpliedVol(self, strikes: List[float], figure: bool = False):
         """
         Method to display implied volatility
         Params:
@@ -109,10 +106,10 @@ class SABR_ImpliedVol(SABR_ATMVol):
             figure (bool): Boolean value carrying information of existing figure for plot
         """
         curve_implied_vol: List[str] = list(map(
-            lambda forward_price: self.Implied_Vol(forward_price), forward_prices))
+            lambda strike: self.Implied_Vol(strike), strikes))
         if not figure:
             plt.figure()
-        plt.plot(forward_prices, curve_implied_vol, label=f"K={self.K}")
+        plt.plot(strikes, curve_implied_vol)
         if not figure:
             plt.title(f"Implied volatility")
             text: str = f"Parameters : alpha={self.alpha}, beta={self.beta}, " +\

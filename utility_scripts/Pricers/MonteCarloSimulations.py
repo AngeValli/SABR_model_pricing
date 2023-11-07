@@ -3,12 +3,11 @@
 import os
 import sys
 
-parent = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-sys.path.append(parent)
-
-import reference_data as reference_data
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import numpy as np
+
+import reference_data as reference_data
 
 class European_Call_Payoff:
     """
@@ -87,16 +86,16 @@ class GeometricBrownianMotion:
         """
         while(self.t_ex - self.dt > 0):
             if self.model == "BlackScholes":
-                dWt = np.random.normal(0, np.sqrt(self.dt))  # Brownian motion
+                dWt = np.random.normal(loc=0, scale=np.sqrt(self.dt))  # Brownian motion
                 dYt = self.volatility*dWt  # Change in price
             elif self.model == "SABR":
-                dWt_uncorrelated = np.random.normal(0, np.sqrt(self.dt), 2)  # Brownian motion
+                dWt_uncorrelated = np.random.normal(loc=0, scale=np.sqrt(self.dt), size=2)  # Brownian motion
                 C = np.array([[1, self.rho], [self.rho, 1]]) # Correlation matrix
                 L = np.linalg.cholesky(C) # Upper triangular cholesky decomposition
-                dWt = np.dot(L, dWt_uncorrelated)
-                dalpha = self.nu*(self.alpha)**self.beta*dWt[0]
-                dYt = self.alpha*(self.current_price)**self.beta*dWt[1]
-                self.alpha += dalpha
+                dWt = np.dot(L, dWt_uncorrelated) # Create correlated brownian motions
+                dalpha = self.nu*(self.alpha)**self.beta*dWt[0] # Change in stochastic volatility
+                dYt = self.alpha*(self.current_price)**self.beta*dWt[1] # Change in price
+                self.alpha += dalpha # Add the change to the current volatility value
             else:
                 err_msg: str = "Wrong model parameter or not implemented"
                 raise Exception(err_msg)
